@@ -1,6 +1,7 @@
 import java.time.LocalDateTime;
 import java.time.Month;
 import java.util.LinkedList;
+import java.util.ListIterator;
 
 public class Test {
 
@@ -120,6 +121,14 @@ public class Test {
             days++;
         }
 //*/
+
+        /** STRATEGY #3 with replenishment deposites */
+
+/*
+
+
+//*/
+
         System.out.println("Active deposites: " + activeDeposites.size());
         System.out.println(Deposit.getALL(currentDay, activeDeposites));
         System.out.println("Total earned: " + earned);

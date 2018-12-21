@@ -14,8 +14,11 @@ public class Deposit implements Serializable {
     private LocalDateTime openDate;
     private LocalDateTime expirationDate;
     private double amount;
+    private double startAmount;
     private double percent;
     private double[] prognosis;
+    private boolean canReplenishment;
+    private double amountOfReplenishment;
 
     static final long ONE_HOUR = 3600L;
 
@@ -32,14 +35,17 @@ public class Deposit implements Serializable {
         return DAYS.between(d1, d2);
     }
 
-    public static long secondsBetween(LocalDateTime d1, LocalDateTime d2) {
+    static long secondsBetween(LocalDateTime d1, LocalDateTime d2) {
         return Duration.between(d1, d2).getSeconds();
     }
 
-    public Deposit(LocalDateTime openDate, int months, double amount, double percent) {
+    public Deposit(LocalDateTime openDate, int months, double amount, double percent, boolean canReplenishment) {
+        this.amountOfReplenishment = .0;
+        this.canReplenishment = canReplenishment;
         this.openDate = openDate.plusDays(1);
         this.expirationDate = this.openDate.plusMonths(months);
         this.amount = amount;
+        this.startAmount = amount;
         this.percent = percent / 100.0;
         prognosis = new double[months];
         float total = (float) (amount * this.percent);
@@ -48,6 +54,26 @@ public class Deposit implements Serializable {
             int days = ( (openDate.plusMonths(i)).getMonth().length(isLeapYear(openDate.plusMonths(i))));
             prognosis[i] = Math.floor( (total * days / 365 * ( 1 - TAXES ) ) * 100) / 100.0;
         }
+    }
+
+    public Deposit(LocalDateTime openDate, int months, double amount, double percent) {
+        this(openDate, months, amount, percent, false);
+    }
+
+    public double Refill(double amount) {
+        double d = .0;
+        if (amount > (startAmount - amountOfReplenishment)) {
+            amountOfReplenishment = startAmount;
+            d = amount - (startAmount - amountOfReplenishment);
+        } else {
+            amountOfReplenishment += amount;
+        }
+        return d;
+    }
+
+    private void resetReplenishment(LocalDateTime day) {
+        if (day.getDayOfMonth() == openDate.getDayOfMonth())
+            amountOfReplenishment = .0;
     }
 
     public double getWidthrawed() {
@@ -93,14 +119,14 @@ public class Deposit implements Serializable {
         return (int) ChronoUnit.MONTHS.between(openDate, date);
     }
 
-    public double getAccurued() {
-        int m = monthElapsed();
-        if (m < 0) return 0.0;
-        long sec = secondsBetween(openDate.plusMonths(m), LocalDateTime.now());
-        int days = ( (openDate.plusMonths(m)).getMonth().length(isLeapYear(openDate.plusMonths(m))));
-        long secondsInCurrentMonth  =  days * 24 * 3600;
-        return prognosis[m] * sec / secondsInCurrentMonth;
-    }
+//    public double getAccurued() {
+//        int m = monthElapsed();
+//        if (m < 0) return 0.0;
+//        long sec = secondsBetween(openDate.plusMonths(m), LocalDateTime.now());
+//        int days = ( (openDate.plusMonths(m)).getMonth().length(isLeapYear(openDate.plusMonths(m))));
+//        long secondsInCurrentMonth  =  days * 24 * 3600;
+//        return prognosis[m] * sec / secondsInCurrentMonth;
+//    }
 
     @Override
     public String toString() {
